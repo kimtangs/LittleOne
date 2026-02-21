@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>막내 앱</title>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Serif+KR:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════
+   ROOT & RESET
+══════════════════════════════════ */
+:root {
+  --cream:   #FAF7F2;
+  --warm:    #F5EDE0;
+  --brown:   #8B5E3C;
+  --dark:    #2C2018;
+  --accent:  #E07B4A;
+  --accent2: #F0A060;
+  --border:  #ECDDD0;
+  --gray:    #9E8E80;
+  --tag-bg:  #FFF3E8;
+  --white:   #FFFFFF;
+  --nav-h:   64px;
+  --appbar-h:52px;
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body {
+  font-family:'Gowun Dodum', sans-serif;
+  background:var(--cream);
+  color:var(--dark);
+  max-width:480px;
+  margin:0 auto;
+  height:100dvh;
+  overflow:hidden;
+  position:relative;
+}
+
+/* ══════════════════════════════════
+   SCREENS
+══════════════════════════════════ */
+.screen {
+  position:absolute;
+  inset:0;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .22s ease;
+  display:flex;
+  flex-direction:column;
+}
+.screen.active {
+  opacity:1;
+  pointer-events:all;
+}
+
+/* 스크롤 영역 */
+.scroll-body {
+  flex:1;
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding-bottom:calc(var(--nav-h) + 8px);
+  -webkit-overflow-scrolling:touch;
+}
+.scroll-body::-webkit-scrollbar { display:none; }
+
+/* ══════════════════════════════════
+   APP BAR
+══════════════════════════════════ */
+.appbar {
+  height:var(--appbar-h);
+  background:var(--cream);
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 18px;
+  position:sticky; top:0; z-index:50;
+  flex-shrink:0;
+}
+.appbar-logo {
+  font-family:'Noto Serif KR',serif;
+  font-size:22px; font-weight:700;
+  color:var(--brown);
+}
+.appbar-logo span { color:var(--accent); }
+.appbar-icons { display:flex; gap:14px; }
+.icon-btn { background:none; border:none; cursor:pointer; padding:4px; display:flex; align-items:center; }
+.icon-btn svg { width:22px; height:22px; stroke:var(--dark); fill:none; stroke-width:1.8; }
+
+/* ══════════════════════════════════
+   BOTTOM NAV
+══════════════════════════════════ */
+.bottom-nav {
+  position:fixed;
+  bottom:0; left:50%; transform:translateX(-50%);
+  width:100%; max-width:480px;
+  height:var(--nav-h);
+  background:var(--white);
+  border-top:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:space-around;
+  padding-bottom:env(safe-area-inset-bottom);
+  z-index:100;
+}
+.nav-item {
+  display:flex; flex-direction:column; align-items:center;
+  gap:3px; cursor:pointer; padding:4px 8px;
+  flex:1;
+}
+.nav-item svg { width:22px; height:22px; stroke:var(--gray); fill:none; stroke-width:1.8; transition:stroke .2s; }
+.nav-label { font-size:10px; color:var(--gray); transition:color .2s; }
+.nav-item.active svg { stroke:var(--accent); }
+.nav-item.active .nav-label { color:var(--accent); font-weight:700; }
+
+/* 가운데 + 버튼 */
+.nav-center {
+  width:52px; height:52px;
+  background:var(--accent);
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer;
+  box-shadow:0 4px 16px rgba(224,123,74,.4);
+  margin-top:-18px;
+  transition:transform .2s;
+  flex-shrink:0;
+}
+.nav-center:active { transform:scale(.93); }
+.nav-center svg { width:26px; height:26px; stroke:white; fill:none; stroke-width:2.2; }
+
+/* ══════════════════════════════════
+   SHARED COMPONENTS
+══════════════════════════════════ */
+/* 탭 바 */
+.tab-bar {
+  display:flex; overflow-x:auto; scrollbar-width:none;
+  border-bottom:1px solid var(--border);
+  background:var(--cream);
+  position:sticky; top:var(--appbar-h); z-index:40;
+  flex-shrink:0;
+}
+.tab-bar::-webkit-scrollbar { display:none; }
+.tab-pill {
+  padding:10px 18px; font-size:13px; white-space:nowrap;
+  color:var(--gray); cursor:pointer;
+  border-bottom:2px solid transparent; transition:all .2s;
+}
+.tab-pill.on { color:var(--accent); border-bottom-color:var(--accent); font-weight:700; }
+
+/* 섹션 타이틀 */
+.sec-title {
+  font-family:'Noto Serif KR',serif;
+  font-size:16px; font-weight:700;
+  padding:18px 16px 8px;
+}
+
+/* 카드 공통 */
+.card {
+  background:var(--white);
+  border-bottom:1px solid var(--border);
+}
+
+/* 카드 헤더 */
+.card-head {
+  display:flex; align-items:center; gap:10px;
+  padding:12px 14px 8px;
+}
+.avatar {
+  width:38px; height:38px; border-radius:50%;
+  background:var(--warm); border:2px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  font-size:20px; flex-shrink:0;
+}
+.c-name { font-size:13px; font-weight:700; }
+.c-meta { font-size:11px; color:var(--gray); margin-top:1px; }
+.badge {
+  margin-left:auto;
+  background:var(--tag-bg); color:var(--accent);
+  font-size:10px; font-weight:700;
+  padding:3px 8px; border-radius:20px;
+  border:1px solid #F5D5B8;
+}
+
+/* 카드 이미지 */
+.card-img {
+  width:100%; aspect-ratio:4/3;
+  display:flex; align-items:center; justify-content:center;
+  font-size:80px;
+}
+
+/* 카드 상품 리스트 */
+.prod-list { padding:10px 14px; display:flex; flex-direction:column; gap:7px; }
+.prod-label { font-size:10px; color:var(--gray); font-weight:700; letter-spacing:.5px; margin-bottom:2px; }
+.prod-item {
+  display:flex; align-items:center; gap:10px;
+  padding:9px 11px; background:var(--tag-bg);
+  border-radius:10px; border:1px solid var(--border); cursor:pointer;
+}
+.prod-thumb {
+  width:40px; height:40px; border-radius:7px;
+  background:var(--white); border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  font-size:22px; flex-shrink:0;
+}
+.prod-info { flex:1; }
+.prod-brand { font-size:9px; color:var(--gray); }
+.prod-name { font-size:12px; font-weight:700; }
+.prod-price { font-size:12px; color:var(--accent); font-weight:700; margin-top:1px; }
+.prod-arrow svg { width:14px; height:14px; stroke:var(--gray); fill:none; stroke-width:2; }
+
+/* 카드 본문 */
+.card-body { padding:6px 14px 10px; }
+.card-title { font-family:'Noto Serif KR',serif; font-size:16px; font-weight:700; margin-bottom:6px; line-height:1.4; }
+.card-desc { font-size:13px; color:#4A3728; line-height:1.7; }
+.pet-chip {
+  display:inline-flex; align-items:center; gap:5px;
+  background:var(--warm); border-radius:20px;
+  padding:5px 12px; margin:8px 0;
+  border:1px solid var(--border);
+}
+.pet-chip-name { font-size:13px; font-weight:700; }
+.pet-tag { font-size:10px; color:var(--gray); background:var(--white); padding:2px 7px; border-radius:20px; border:1px solid var(--border); }
+
+/* 카드 액션 */
+.card-actions {
+  display:flex; align-items:center; gap:12px;
+  padding:8px 14px 12px; border-top:1px solid var(--border);
+}
+.act-btn {
+  display:flex; align-items:center; gap:4px;
+  font-size:12px; color:var(--gray); cursor:pointer; background:none; border:none;
+  font-family:'Gowun Dodum',sans-serif;
+}
+.act-btn svg { width:17px; height:17px; stroke:var(--gray); fill:none; stroke-width:1.8; }
+.act-btn.liked svg { stroke:#E05555; fill:#E05555; }
+.act-btn.liked { color:#E05555; }
+.act-spacer { flex:1; }
+.card-comment { padding:0 14px 12px; font-size:12px; color:var(--gray); }
+.card-comment strong { color:var(--dark); }
+
+/* ══════════════════════════════════
+   SCREEN 1: 홈
+══════════════════════════════════ */
+/* 검색바 */
+.search-bar {
+  margin:12px 14px; display:flex; align-items:center; gap:8px;
+  background:var(--warm); border-radius:12px; padding:10px 14px;
+  border:1px solid var(--border);
+}
+.search-bar svg { width:16px; height:16px; stroke:var(--gray); fill:none; stroke-width:1.8; flex-shrink:0; }
+.search-bar span { font-size:13px; color:var(--gray); }
+
+/* 가로 스크롤 카드 */
+.h-scroll { display:flex; gap:10px; overflow-x:auto; scrollbar-width:none; padding:0 14px 4px; }
+.h-scroll::-webkit-scrollbar { display:none; }
+
+/* 추천 카드 (가로) */
+.rec-card {
+  flex-shrink:0; width:160px; border-radius:14px;
+  overflow:hidden; background:var(--white);
+  border:1px solid var(--border); cursor:pointer;
+}
+.rec-card-img {
+  width:100%; height:110px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:52px;
+}
+.rec-card-body { padding:8px 10px 10px; }
+.rec-card-cat { font-size:9px; color:var(--accent); font-weight:700; }
+.rec-card-title { font-size:12px; font-weight:700; margin-top:2px; line-height:1.4; }
+.rec-card-meta { font-size:10px; color:var(--gray); margin-top:4px; }
+
+/* 카테고리 칩 */
+.cat-chips { display:flex; gap:8px; overflow-x:auto; scrollbar-width:none; padding:0 14px 4px; }
+.cat-chips::-webkit-scrollbar { display:none; }
+.cat-chip {
+  flex-shrink:0; display:flex; flex-direction:column; align-items:center;
+  gap:4px; cursor:pointer; padding:8px 12px;
+  background:var(--white); border-radius:14px; border:1px solid var(--border);
+}
+.cat-chip span:first-child { font-size:22px; }
+.cat-chip span:last-child { font-size:10px; color:var(--gray); font-weight:700; }
+.cat-chip.on { background:var(--tag-bg); border-color:var(--accent); }
+.cat-chip.on span:last-child { color:var(--accent); }
+
+/* 인기 그리드 */
+.pop-grid { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border); margin:8px 0; }
+.pop-cell {
+  background:var(--white); aspect-ratio:1;
+  display:flex; align-items:center; justify-content:center;
+  font-size:52px; cursor:pointer; position:relative;
+}
+.pop-cell-label {
+  position:absolute; bottom:8px; left:8px; right:8px;
+  font-size:11px; font-weight:700;
+  background:rgba(255,255,255,.9); border-radius:6px; padding:3px 6px;
+}
+
+/* 배너 */
+.banner {
+  margin:14px 14px 0;
+  background:linear-gradient(135deg,var(--brown),var(--accent));
+  border-radius:14px; padding:16px 18px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.banner-text h3 { font-family:'Noto Serif KR',serif; font-size:15px; color:var(--white); font-weight:700; }
+.banner-text p { font-size:11px; color:rgba(255,255,255,.75); margin-top:3px; }
+.banner-badge {
+  background:rgba(255,255,255,.2); color:var(--white);
+  font-size:10px; font-weight:700; padding:3px 10px;
+  border-radius:20px; margin-top:8px; display:inline-block;
+}
+.banner-emoji { font-size:44px; }
+
+/* ══════════════════════════════════
+   SCREEN 2: 피드
+══════════════════════════════════ */
+
+/* ══════════════════════════════════
+   SCREEN 3: 올리기 (바텀시트)
+══════════════════════════════════ */
+.post-overlay {
+  position:fixed; inset:0;
+  background:rgba(44,32,24,.5);
+  z-index:200;
+  display:none; align-items:flex-end; justify-content:center;
+}
+.post-overlay.open { display:flex; }
+.post-sheet {
+  width:100%; max-width:480px;
+  background:var(--white);
+  border-radius:24px 24px 0 0;
+  padding:20px 20px 48px;
+  animation:slideUp .3s ease;
+}
+@keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+.sheet-handle {
+  width:40px; height:4px; background:var(--border);
+  border-radius:2px; margin:0 auto 20px;
+}
+.sheet-title {
+  font-family:'Noto Serif KR',serif;
+  font-size:18px; font-weight:700; margin-bottom:16px;
+}
+.post-types { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+.post-type {
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  padding:16px 8px; background:var(--warm);
+  border-radius:14px; border:1.5px solid var(--border);
+  cursor:pointer; transition:all .2s;
+}
+.post-type:active { border-color:var(--accent); background:var(--tag-bg); }
+.post-type span:first-child { font-size:32px; }
+.post-type span:last-child { font-size:12px; font-weight:700; color:var(--dark); }
+
+/* ══════════════════════════════════
+   SCREEN 4: 나들이 (준비중 + 카테고리)
+══════════════════════════════════ */
+.coming-hero {
+  margin:20px 14px 0;
+  background:linear-gradient(135deg,#2C2018,#8B5E3C);
+  border-radius:18px; padding:28px 22px;
+  text-align:center; color:var(--white);
+}
+.coming-hero h2 { font-family:'Noto Serif KR',serif; font-size:20px; font-weight:700; margin:12px 0 8px; }
+.coming-hero p { font-size:13px; opacity:.75; line-height:1.7; }
+.coming-badge {
+  display:inline-block; background:var(--accent);
+  color:var(--white); font-size:11px; font-weight:700;
+  padding:5px 14px; border-radius:20px; margin-top:14px;
+}
+.coming-emoji { font-size:52px; }
+
+.coming-cats { padding:20px 14px 0; }
+.coming-cats h3 { font-family:'Noto Serif KR',serif; font-size:15px; font-weight:700; margin-bottom:12px; }
+.coming-cat-list { display:flex; flex-direction:column; gap:10px; }
+.coming-cat-item {
+  display:flex; align-items:center; gap:14px;
+  padding:14px 16px; background:var(--white);
+  border-radius:14px; border:1px solid var(--border);
+}
+.coming-cat-icon { font-size:28px; width:44px; height:44px; display:flex; align-items:center; justify-content:center; background:var(--warm); border-radius:12px; flex-shrink:0; }
+.coming-cat-info h4 { font-size:14px; font-weight:700; }
+.coming-cat-info p { font-size:12px; color:var(--gray); margin-top:2px; }
+.coming-cat-badge { margin-left:auto; background:var(--tag-bg); color:var(--accent); font-size:10px; font-weight:700; padding:3px 8px; border-radius:20px; border:1px solid #F5D5B8; flex-shrink:0; }
+
+/* ══════════════════════════════════
+   SCREEN 5: 마이
+══════════════════════════════════ */
+.my-hero {
+  background:linear-gradient(180deg, var(--warm) 0%, var(--cream) 100%);
+  padding:28px 20px 20px;
+  display:flex; align-items:center; gap:16px;
+}
+.my-avatar {
+  width:72px; height:72px; border-radius:50%;
+  background:var(--white); border:3px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  font-size:38px; flex-shrink:0;
+}
+.my-info h2 { font-family:'Noto Serif KR',serif; font-size:18px; font-weight:700; }
+.my-info p { font-size:12px; color:var(--gray); margin-top:3px; }
+.my-stats {
+  display:flex; gap:0; margin:0 14px;
+  background:var(--white); border-radius:14px; border:1px solid var(--border);
+  overflow:hidden;
+}
+.my-stat {
+  flex:1; display:flex; flex-direction:column; align-items:center;
+  padding:14px 8px; border-right:1px solid var(--border);
+}
+.my-stat:last-child { border-right:none; }
+.my-stat-num { font-family:'Noto Serif KR',serif; font-size:20px; font-weight:700; color:var(--accent); }
+.my-stat-label { font-size:10px; color:var(--gray); margin-top:2px; }
+
+/* 내 막내 */
+.my-pets { padding:16px 14px 0; }
+.my-pets h3 { font-family:'Noto Serif KR',serif; font-size:15px; font-weight:700; margin-bottom:10px; }
+.pet-cards { display:flex; gap:10px; overflow-x:auto; scrollbar-width:none; }
+.pet-cards::-webkit-scrollbar { display:none; }
+.pet-card {
+  flex-shrink:0; width:120px; padding:14px 12px;
+  background:var(--white); border-radius:16px; border:1.5px solid var(--border);
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  cursor:pointer; text-align:center;
+}
+.pet-card-avatar { font-size:36px; width:54px; height:54px; background:var(--warm); border-radius:50%; display:flex; align-items:center; justify-content:center; }
+.pet-card-name { font-size:13px; font-weight:700; }
+.pet-card-info { font-size:10px; color:var(--gray); line-height:1.5; }
+.pet-card.add { border-style:dashed; border-color:var(--accent); }
+.pet-card.add .pet-card-avatar { background:var(--tag-bg); font-size:28px; }
+.pet-card.add .pet-card-name { color:var(--accent); }
+
+/* 설정 메뉴 */
+.my-menu { padding:16px 14px 0; }
+.my-menu h3 { font-family:'Noto Serif KR',serif; font-size:15px; font-weight:700; margin-bottom:8px; }
+.menu-item {
+  display:flex; align-items:center; gap:12px;
+  padding:14px 0; border-bottom:1px solid var(--border); cursor:pointer;
+}
+.menu-item:last-child { border-bottom:none; }
+.menu-icon { font-size:20px; width:36px; height:36px; background:var(--warm); border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.menu-label { font-size:14px; font-weight:700; }
+.menu-sub { font-size:11px; color:var(--gray); margin-top:2px; }
+.menu-arrow svg { width:14px; height:14px; stroke:var(--gray); fill:none; stroke-width:2; margin-left:auto; }
+
+/* ══════════════════════════════════
+   피드 미리보기 (마이)
+══════════════════════════════════ */
+.my-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:2px; margin:12px 0 0; }
+.my-grid-cell {
+  aspect-ratio:1; background:var(--warm);
+  display:flex; align-items:center; justify-content:center; font-size:32px;
+  cursor:pointer;
+}
+
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════
+     SCREEN 1: 홈
+════════════════════════════ -->
+<div class="screen active" id="s-home">
+  <div class="appbar">
+    <div class="appbar-logo">막<span>내</span></div>
+    <div class="appbar-icons">
+      <button class="icon-btn"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
+      <button class="icon-btn"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
+    </div>
+  </div>
+
+  <div class="tab-bar" id="home-tabs">
+    <div class="tab-pill on" data-t="home-all">추천</div>
+    <div class="tab-pill" data-t="home-pop">인기</div>
+    <div class="tab-pill" data-t="home-move">집들이</div>
+    <div class="tab-pill" data-t="home-tip">노하우</div>
+    <div class="tab-pill" data-t="home-daily">일상</div>
+  </div>
+
+  <div class="scroll-body">
+    <!-- 검색 -->
+    <div class="search-bar">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <span>막내 이야기를 검색해봐요</span>
+    </div>
+
+    <!-- 카테고리 -->
+    <div class="cat-chips">
+      <div class="cat-chip on"><span>🏠</span><span>집들이</span></div>
+      <div class="cat-chip"><span>📸</span><span>일상</span></div>
+      <div class="cat-chip"><span>💡</span><span>노하우</span></div>
+      <div class="cat-chip"><span>🛍</span><span>용품</span></div>
+      <div class="cat-chip"><span>🐾</span><span>산책</span></div>
+      <div class="cat-chip"><span>✂️</span><span>미용</span></div>
+    </div>
+
+    <!-- 추천 가로스크롤 -->
+    <div class="sec-title">🔥 지금 인기 게시물</div>
+    <div class="h-scroll">
+      <div class="rec-card">
+        <div class="rec-card-img" style="background:linear-gradient(135deg,#FFF0D6,#FFD8A0)">🐶</div>
+        <div class="rec-card-body">
+          <div class="rec-card-cat">집들이</div>
+          <div class="rec-card-title">콩이 입양 100일 방 완성!</div>
+          <div class="rec-card-meta">❤️ 247 · 3일 전</div>
+        </div>
+      </div>
+      <div class="rec-card">
+        <div class="rec-card-img" style="background:linear-gradient(135deg,#EDF4FF,#C8DFFF)">🐱</div>
+        <div class="rec-card-body">
+          <div class="rec-card-cat">노하우</div>
+          <div class="rec-card-title">고양이 털 빠짐 줄이는 꿀팁</div>
+          <div class="rec-card-meta">❤️ 183 · 1주 전</div>
+        </div>
+      </div>
+      <div class="rec-card">
+        <div class="rec-card-img" style="background:linear-gradient(135deg,#F0FFF0,#C0EAC0)">🐰</div>
+        <div class="rec-card-body">
+          <div class="rec-card-cat">집들이</div>
+          <div class="rec-card-title">토끼 전용 놀이방 만들기</div>
+          <div class="rec-card-meta">❤️ 98 · 5일 전</div>
+        </div>
+      </div>
+      <div class="rec-card">
+        <div class="rec-card-img" style="background:linear-gradient(135deg,#FFF0F4,#FFD0DC)">🦜</div>
+        <div class="rec-card-body">
+          <div class="rec-card-cat">일상</div>
+          <div class="rec-card-title">앵무새랑 아침 루틴 공개</div>
+          <div class="rec-card-meta">❤️ 71 · 2일 전</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 집들이 그리드 -->
+    <div class="sec-title" style="margin-top:8px;">🏠 최근 입주신고</div>
+    <div class="pop-grid">
+      <div class="pop-cell" style="background:linear-gradient(135deg,#FFF0D6,#FFDC8C)">
+        🐶
+        <div class="pop-cell-label">골든리트리버 콩이</div>
+      </div>
+      <div class="pop-cell" style="background:linear-gradient(135deg,#EDF4FF,#B8D8FF)">
+        🐱
+        <div class="pop-cell-label">고양이 루나</div>
+      </div>
+      <div class="pop-cell" style="background:linear-gradient(135deg,#F0FFF0,#B8E8B8)">
+        🐰
+        <div class="pop-cell-label">미니렉스 모찌</div>
+      </div>
+      <div class="pop-cell" style="background:linear-gradient(135deg,#FFF0F8,#FFD0E8)">
+        🐹
+        <div class="pop-cell-label">햄스터 콩나물</div>
+      </div>
+    </div>
+
+    <!-- 피드 카드 -->
+    <div class="card">
+      <div class="card-head">
+        <div class="avatar">🐶</div>
+        <div>
+          <div class="c-name">콩이네집</div>
+          <div class="c-meta">서울 마포구 · 3일 전</div>
+        </div>
+        <div class="badge">집들이</div>
+      </div>
+      <div class="card-img" style="background:linear-gradient(135deg,#FFF0D6,#FFD8A0)">🐾</div>
+      <div class="card-body">
+        <div class="card-title">드디어 입양 100일! 콩이 방 완성 🐕</div>
+        <div class="pet-chip">
+          <span>🐶</span>
+          <span class="pet-chip-name">콩이</span>
+          <span class="pet-tag">골든리트리버</span>
+          <span class="pet-tag">8개월</span>
+        </div>
+        <div class="card-desc">대형견 맞춤으로 하우스랑 사료그릇 전부 바꿔줬어요. 세탁기 세탁 되는 거 꼭 확인하세요 👍</div>
+      </div>
+      <div class="prod-list">
+        <div class="prod-label">📦 이 게시물의 상품</div>
+        <div class="prod-item">
+          <div class="prod-thumb">🛏</div>
+          <div class="prod-info">
+            <div class="prod-brand">Petto</div>
+            <div class="prod-name">대형견 쿠션하우스 L</div>
+            <div class="prod-price">₩ 76,500</div>
+          </div>
+          <div class="prod-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
+        <div class="prod-item">
+          <div class="prod-thumb">🥣</div>
+          <div class="prod-info">
+            <div class="prod-brand">네이처스레시피</div>
+            <div class="prod-name">어덜트 대형견 사료 5kg</div>
+            <div class="prod-price">₩ 38,000</div>
+          </div>
+          <div class="prod-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="act-btn liked">
+          <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          247
+        </button>
+        <button class="act-btn">
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          38
+        </button>
+        <button class="act-btn">
+          <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        </button>
+        <div class="act-spacer"></div>
+        <button class="act-btn">
+          <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        </button>
+      </div>
+      <div class="card-comment"><strong>망고맘</strong> 저도 눈여겨봤는데 리뷰 감사해요 🐾</div>
+    </div>
+
+    <!-- 쇼핑몰 배너 -->
+    <div class="banner">
+      <div class="banner-text">
+        <h3>막내 공식 쇼핑몰</h3>
+        <p>엄선한 용품을 더 저렴하게</p>
+        <div class="banner-badge">🛍 오픈 예정</div>
+      </div>
+      <div class="banner-emoji">🐾</div>
+    </div>
+
+    <div style="height:20px;"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     SCREEN 2: 피드
+════════════════════════════ -->
+<div class="screen" id="s-feed">
+  <div class="appbar">
+    <div class="appbar-logo">막<span>내</span></div>
+    <div class="appbar-icons">
+      <button class="icon-btn"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab-pill on">추천</div>
+    <div class="tab-pill">팔로우</div>
+    <div class="tab-pill">일기</div>
+  </div>
+
+  <div class="scroll-body">
+
+    <!-- 카드 1 -->
+    <div class="card">
+      <div class="card-head">
+        <div class="avatar">🐶</div>
+        <div>
+          <div class="c-name">콩이네집</div>
+          <div class="c-meta">서울 마포구 · 3일 전</div>
+        </div>
+        <div class="badge">집들이</div>
+      </div>
+      <div class="card-img" style="background:linear-gradient(135deg,#FFF0D6,#FFD8A0)">🐾</div>
+      <div class="prod-list">
+        <div class="prod-label">📦 이 게시물의 상품</div>
+        <div class="prod-item">
+          <div class="prod-thumb">🛏</div>
+          <div class="prod-info">
+            <div class="prod-brand">Petto</div>
+            <div class="prod-name">대형견 쿠션하우스 L사이즈</div>
+            <div class="prod-price">₩ 76,500</div>
+          </div>
+          <div class="prod-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
+        <div class="prod-item">
+          <div class="prod-thumb">🥣</div>
+          <div class="prod-info">
+            <div class="prod-brand">네이처스레시피</div>
+            <div class="prod-name">어덜트 대형견 사료 5kg</div>
+            <div class="prod-price">₩ 38,000</div>
+          </div>
+          <div class="prod-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-title">드디어 입양 100일! 콩이 방 완성했어요 🐕</div>
+        <div class="pet-chip">
+          <span>🐶</span><span class="pet-chip-name">콩이 (♂)</span>
+          <span class="pet-tag">골든리트리버</span><span class="pet-tag">8개월</span><span class="pet-tag">18kg</span>
+        </div>
+        <div class="card-desc">처음 분양받을 때 작았던 콩이가 벌써 18kg이 됐어요 😂 대형견 맞춤으로 하우스랑 사료그릇 전부 바꿔줬는데 너무 잘 맞아요!</div>
+      </div>
+      <div class="card-actions">
+        <button class="act-btn liked"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>247</button>
+        <button class="act-btn"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>38</button>
+        <button class="act-btn"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+        <div class="act-spacer"></div>
+        <button class="act-btn"><svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>
+      </div>
+      <div class="card-comment"><strong>망고맘</strong> 저도 콩이 하우스 눈여겨봤는데 리뷰 감사해요 🐾</div>
+    </div>
+
+    <!-- 카드 2 -->
+    <div class="card">
+      <div class="card-head">
+        <div class="avatar">🐱</div>
+        <div>
+          <div class="c-name">루나의하루</div>
+          <div class="c-meta">서울 성동구 · 1주 전</div>
+        </div>
+        <div class="badge">집들이</div>
+      </div>
+      <div class="card-img" style="background:linear-gradient(135deg,#EDF4FF,#C8DFFF)">✨🐱</div>
+      <div class="prod-list">
+        <div class="prod-label">📦 이 게시물의 상품</div>
+        <div class="prod-item">
+          <div class="prod-thumb">🗼</div>
+          <div class="prod-info">
+            <div class="prod-brand">캐트인</div>
+            <div class="prod-name">창가형 캣타워 180cm</div>
+            <div class="prod-price">₩ 89,000</div>
+          </div>
+          <div class="prod-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
+        <div class="prod-item">
+          <div class="prod-thumb">🧶</div>
+          <div class="prod-info">
+            <div class="prod-brand">니냐냐</div>
+            <div class="prod-name">자동 레이저 장난감</div>
+            <div class="prod-price">₩ 18,500</div>
+          </div>
+          <div class="prod-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-title">루나 입양 1주일, 캣타워 셋업 완료 🐈</div>
+        <div class="pet-chip">
+          <span>🐱</span><span class="pet-chip-name">루나 (♀)</span>
+          <span class="pet-tag">코숏</span><span class="pet-tag">5개월</span>
+        </div>
+        <div class="card-desc">루나가 적응을 너무 잘해줘서 일주일 만에 방 전체를 루나 왕국으로 꾸며버렸어요 👑</div>
+      </div>
+      <div class="card-actions">
+        <button class="act-btn"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>183</button>
+        <button class="act-btn"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>21</button>
+        <button class="act-btn"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+        <div class="act-spacer"></div>
+        <button class="act-btn"><svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>
+      </div>
+      <div class="card-comment"><strong>두부아빠</strong> 캣타워 브랜드 공유해주세요 🙏</div>
+    </div>
+
+    <!-- 카드 3: 일기 스타일 -->
+    <div class="card">
+      <div class="card-head">
+        <div class="avatar">🐶</div>
+        <div>
+          <div class="c-name">망고아빠</div>
+          <div class="c-meta">서울 송파구 · 어제</div>
+        </div>
+        <div class="badge">막내일기</div>
+      </div>
+      <div class="card-img" style="background:linear-gradient(135deg,#FFF4E0,#FFE0B0); font-size:60px;">🌅</div>
+      <div class="card-body">
+        <div class="card-title">망고 오늘 처음으로 계단 혼자 내려옴 🏆</div>
+        <div class="pet-chip">
+          <span>🐶</span><span class="pet-chip-name">망고 (♂)</span>
+          <span class="pet-tag">포메라니안</span><span class="pet-tag">2살</span>
+        </div>
+        <div class="card-desc">그동안 무서워서 못 내려오던 계단을 오늘 드디어 혼자 내려왔어요! 간식 들고 기다렸더니 용기 냈나봐요 😭</div>
+      </div>
+      <div class="card-actions">
+        <button class="act-btn"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>312</button>
+        <button class="act-btn"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>54</button>
+        <button class="act-btn"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+        <div class="act-spacer"></div>
+        <button class="act-btn"><svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>
+      </div>
+      <div class="card-comment"><strong>콩이네집</strong> 너무 귀여워요 ㅠㅠ 저도 간식으로 도전해봐야겠어요!</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     SCREEN 4: 나들이
+════════════════════════════ -->
+<div class="screen" id="s-explore">
+  <div class="appbar">
+    <div class="appbar-logo">막<span>내</span></div>
+    <div class="appbar-icons">
+      <button class="icon-btn"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
+    </div>
+  </div>
+
+  <div class="scroll-body">
+    <div class="coming-hero">
+      <div class="coming-emoji">🗺</div>
+      <h2>막내 나들이</h2>
+      <p>동물병원, 애견카페, 훈련소까지<br>막내와 함께하는 모든 장소를<br>한곳에서 찾아요</p>
+      <div class="coming-badge">🔜 서비스 준비 중</div>
+    </div>
+
+    <div class="coming-cats">
+      <h3>준비 중인 서비스</h3>
+      <div class="coming-cat-list">
+        <div class="coming-cat-item">
+          <div class="coming-cat-icon">🏥</div>
+          <div class="coming-cat-info">
+            <h4>동물병원</h4>
+            <p>내 주변 동물병원 정보 & 리뷰</p>
+          </div>
+          <div class="coming-cat-badge">준비중</div>
+        </div>
+        <div class="coming-cat-item">
+          <div class="coming-cat-icon">☕</div>
+          <div class="coming-cat-info">
+            <h4>애견카페</h4>
+            <p>막내와 함께 갈 수 있는 카페</p>
+          </div>
+          <div class="coming-cat-badge">준비중</div>
+        </div>
+        <div class="coming-cat-item">
+          <div class="coming-cat-icon">🎓</div>
+          <div class="coming-cat-info">
+            <h4>애견훈련</h4>
+            <p>전문 훈련사 & 훈련소 정보</p>
+          </div>
+          <div class="coming-cat-badge">준비중</div>
+        </div>
+        <div class="coming-cat-item">
+          <div class="coming-cat-icon">✂️</div>
+          <div class="coming-cat-info">
+            <h4>미용실</h4>
+            <p>펫 미용 & 스파 샵 정보</p>
+          </div>
+          <div class="coming-cat-badge">준비중</div>
+        </div>
+        <div class="coming-cat-item">
+          <div class="coming-cat-icon">🏕</div>
+          <div class="coming-cat-info">
+            <h4>반려동물 동반 숙소</h4>
+            <p>펫 프렌들리 숙소 & 펜션</p>
+          </div>
+          <div class="coming-cat-badge">준비중</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 알림 신청 -->
+    <div style="margin:20px 14px 0; padding:18px; background:var(--warm); border-radius:16px; border:1px solid var(--border); text-align:center;">
+      <div style="font-size:28px; margin-bottom:8px;">🔔</div>
+      <div style="font-family:'Noto Serif KR',serif; font-size:15px; font-weight:700; margin-bottom:6px;">오픈 알림 받기</div>
+      <div style="font-size:12px; color:var(--gray); line-height:1.7; margin-bottom:14px;">서비스 오픈 시 가장 먼저 알려드려요!</div>
+      <div style="background:var(--accent); color:white; padding:12px; border-radius:12px; font-size:14px; font-weight:700; cursor:pointer;">알림 신청하기</div>
+    </div>
+
+    <div style="height:20px;"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     SCREEN 5: 마이
+════════════════════════════ -->
+<div class="screen" id="s-my">
+  <div class="appbar">
+    <div class="appbar-logo">막<span>내</span></div>
+    <div class="appbar-icons">
+      <button class="icon-btn"><svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+    </div>
+  </div>
+
+  <div class="scroll-body">
+    <!-- 내 정보 -->
+    <div class="my-hero">
+      <div class="my-avatar">😊</div>
+      <div class="my-info">
+        <h2>김태영</h2>
+        <p>@maknae_ty · 서울 마포구</p>
+        <div style="margin-top:8px;">
+          <span style="background:var(--accent);color:white;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;">✏️ 프로필 편집</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 통계 -->
+    <div class="my-stats">
+      <div class="my-stat">
+        <div class="my-stat-num">12</div>
+        <div class="my-stat-label">게시물</div>
+      </div>
+      <div class="my-stat">
+        <div class="my-stat-num">248</div>
+        <div class="my-stat-label">팔로워</div>
+      </div>
+      <div class="my-stat">
+        <div class="my-stat-num">127</div>
+        <div class="my-stat-label">팔로잉</div>
+      </div>
+      <div class="my-stat">
+        <div class="my-stat-num">1.2K</div>
+        <div class="my-stat-label">좋아요</div>
+      </div>
+    </div>
+
+    <!-- 내 막내 -->
+    <div class="my-pets" style="margin-top:16px;">
+      <h3>🐾 우리 막내</h3>
+      <div class="pet-cards">
+        <div class="pet-card">
+          <div class="pet-card-avatar">🐶</div>
+          <div class="pet-card-name">콩이</div>
+          <div class="pet-card-info">골든리트리버<br>8개월 · 수컷</div>
+        </div>
+        <div class="pet-card">
+          <div class="pet-card-avatar">🐱</div>
+          <div class="pet-card-name">루나</div>
+          <div class="pet-card-info">코리안숏헤어<br>3살 · 암컷</div>
+        </div>
+        <div class="pet-card add" onclick="">
+          <div class="pet-card-avatar">➕</div>
+          <div class="pet-card-name" style="color:var(--accent);">막내 추가</div>
+          <div class="pet-card-info">새 막내를<br>등록해봐요</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 내 게시물 그리드 -->
+    <div class="my-pets" style="margin-top:16px;">
+      <h3>📸 내 게시물</h3>
+    </div>
+    <div class="my-grid">
+      <div class="my-grid-cell" style="background:linear-gradient(135deg,#FFF0D6,#FFD8A0)">🐾</div>
+      <div class="my-grid-cell" style="background:linear-gradient(135deg,#EDF4FF,#C8DFFF)">🐱</div>
+      <div class="my-grid-cell" style="background:linear-gradient(135deg,#F0FFF0,#C0EAC0)">🌿</div>
+      <div class="my-grid-cell" style="background:linear-gradient(135deg,#FFF0F8,#FFD0E8)">🐶</div>
+      <div class="my-grid-cell" style="background:linear-gradient(135deg,#FFFBF0,#FFE8B0)">🌞</div>
+      <div class="my-grid-cell" style="background:linear-gradient(135deg,#F4F0FF,#D8C8FF)">🛁</div>
+    </div>
+
+    <!-- 메뉴 -->
+    <div class="my-menu" style="margin-top:16px;">
+      <h3>⚙️ 설정</h3>
+      <div class="menu-item">
+        <div class="menu-icon">🔔</div>
+        <div><div class="menu-label">알림 설정</div><div class="menu-sub">좋아요, 댓글, 팔로우 알림</div></div>
+        <div class="menu-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </div>
+      <div class="menu-item">
+        <div class="menu-icon">🔒</div>
+        <div><div class="menu-label">개인정보 보호</div><div class="menu-sub">계정 공개 범위 설정</div></div>
+        <div class="menu-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </div>
+      <div class="menu-item">
+        <div class="menu-icon">🛍</div>
+        <div><div class="menu-label">구매 내역</div><div class="menu-sub">주문 및 배송 확인</div></div>
+        <div class="menu-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </div>
+      <div class="menu-item">
+        <div class="menu-icon">💬</div>
+        <div><div class="menu-label">고객센터</div><div class="menu-sub">문의 및 피드백</div></div>
+        <div class="menu-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </div>
+      <div class="menu-item">
+        <div class="menu-icon">🚪</div>
+        <div><div class="menu-label">로그아웃</div></div>
+        <div class="menu-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </div>
+    </div>
+    <div style="height:20px;"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     올리기 바텀시트
+════════════════════════════ -->
+<div class="post-overlay" id="postOverlay" onclick="closePost(event)">
+  <div class="post-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">무엇을 공유할까요? 🐾</div>
+    <div class="post-types">
+      <div class="post-type">
+        <span>🏠</span>
+        <span>입주신고</span>
+      </div>
+      <div class="post-type">
+        <span>📓</span>
+        <span>막내일기</span>
+      </div>
+      <div class="post-type">
+        <span>🗺</span>
+        <span>동네탐방</span>
+      </div>
+      <div class="post-type">
+        <span>💡</span>
+        <span>노하우</span>
+      </div>
+      <div class="post-type">
+        <span>📸</span>
+        <span>일상사진</span>
+      </div>
+      <div class="post-type">
+        <span>🛍</span>
+        <span>용품추천</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     BOTTOM NAVIGATION
+════════════════════════════ -->
+<div class="bottom-nav">
+  <div class="nav-item active" data-screen="s-home">
+    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span class="nav-label">홈</span>
+  </div>
+  <div class="nav-item" data-screen="s-feed">
+    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    <span class="nav-label">피드</span>
+  </div>
+  <div class="nav-center" id="btnPost">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </div>
+  <div class="nav-item" data-screen="s-explore">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+    <span class="nav-label">나들이</span>
+  </div>
+  <div class="nav-item" data-screen="s-my">
+    <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <span class="nav-label">마이</span>
+  </div>
+</div>
+
+<script>
+/* ── 탭 전환 ── */
+const screens = document.querySelectorAll('.screen');
+const navItems = document.querySelectorAll('.nav-item[data-screen]');
+
+navItems.forEach(item => {
+  item.addEventListener('click', () => {
+    const targetId = item.dataset.screen;
+    screens.forEach(s => s.classList.remove('active'));
+    navItems.forEach(n => n.classList.remove('active'));
+    document.getElementById(targetId).classList.add('active');
+    item.classList.add('active');
+  });
+});
+
+/* ── 올리기 바텀시트 ── */
+document.getElementById('btnPost').addEventListener('click', () => {
+  document.getElementById('postOverlay').classList.add('open');
+});
+function closePost(e) {
+  if (e.target === document.getElementById('postOverlay')) {
+    document.getElementById('postOverlay').classList.remove('open');
+  }
+}
+
+/* ── 홈 탭 전환 ── */
+document.getElementById('home-tabs').querySelectorAll('.tab-pill').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('#home-tabs .tab-pill').forEach(x => x.classList.remove('on'));
+    t.classList.add('on');
+  });
+});
+
+/* ── 카테고리 칩 ── */
+document.querySelectorAll('.cat-chip').forEach(c => {
+  c.addEventListener('click', () => {
+    document.querySelectorAll('.cat-chip').forEach(x => x.classList.remove('on'));
+    c.classList.add('on');
+  });
+});
+
+/* ── 피드 탭 ── */
+document.querySelectorAll('#s-feed .tab-pill').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('#s-feed .tab-pill').forEach(x => x.classList.remove('on'));
+    t.classList.add('on');
+  });
+});
+</script>
+</body>
+</html>
